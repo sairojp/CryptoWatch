@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Search and Notifications</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="header">
+      <div class="leftsection">
+        <h1 class="logo">Crypto</h1>
+      </div>
+      <div class="middlesection">
+        <input class="searchbar" type="input" placeholder="Search" />
+        <button class="searchbutton">
+          <img class="search" src="icons/search.svg" />
+          <div class="tooltip">Search</div>
+        </button>
+      </div>
+      <div class="rightsection">
+        <div class="notification-icon-container"onclick="toggleNotifi()">
+          <div class="notification-count">2</div>
+          <div class="tooltip" >Notifications</div>
+          <img class="notifications" src="icons/notifications.svg" />
+        </div>
+      </div>
+
+      <div class="notifi-box" id="box">
+    </header>
+
+    <div class="main-container">
+      <div class="container">
+        <div  class="column">Name</div>
+        <div  class="column">Code</div>
+        <div  class="column">Price</div>
+        <div  class="column">Market</div>
+        <div  class="column">24h change</div>
+        <div  class="column"></div>
+      </div>
+      <div class="container">
+        <div id="column1" class="column"></div>
+        <div id="column6" class="column"></div>
+        <div id="column2" class="column"></div>
+        <div id="column3" class="column"></div>
+        <div id="column4" class="column"></div>
+        <div id="column5" class="column"></div>
+      </div>
+
+      <form id="priceForm">
+        <label for="min_price">Minimum Price:</label>
+        <input type="number" id="min_price" name="min_price" />
+        <br />
+        <label for="max_price">Maximum Price:</label>
+        <input type="number" id="max_price" name="max_price" />
+        <br />
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+
+    <div class="watchlist-main-container">
+      <button class="watchlist-button">Show watchlist</button>
+      <div class="watchlist-container">
+        <div id="container"class="container">
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.js"></script>
+    <script>
+
+      const socket = io();
+
+    socket.on('message', message => {
+        window.alert("alert")
+    });
+
+
+      const button = document.querySelector(".searchbutton");
+      button.addEventListener("click", function () {
+        let input = document.querySelector(".searchbar").value.toLowerCase();
+        try {
+          if (input) {
+            fetch(
+              `http://localhost:3000/search?crypto=${encodeURIComponent(input)}`
+            )
+              .then((resp) => resp.json())
+              .then((response) => {
+                document.querySelector(".main-container").style.display =
+                  "block";
+                document.getElementById("column1").textContent =
+                  response.data.name;
+                document.getElementById("column2").textContent =
+                  response.data.price;
+                document.getElementById("column3").textContent =
+                  response.data.market;
+                document.getElementById("column4").textContent =
+                  response.data.change24h;
+                document.getElementById("column6").textContent =
+                  response.data.code;
+
+                document.getElementById("column5").innerHTML=''
+                const button = document.createElement("button");
+                button.textContent = "Create watchlist";
+                button.className = "button-class";
+
+                button.addEventListener("click", () => {
+                  const form = document.getElementById("priceForm");
+                  form.style.display = "block";
+                });
+
+                document.getElementById("column5").appendChild(button);
+              });
+          }
+        } catch (error) {
+          console.alert(error.error);
+        }
+      });
+
+      const priceForm = document.getElementById("priceForm");
+
+      priceForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const minPrice = document.getElementById("min_price").value;
+        const maxPrice = document.getElementById("max_price").value;
+
+        if (minPrice === "" || maxPrice === "") {
+          alert("Please enter both minimum and maximum prices.");
+          return;
+        }
+
+        const minPriceNumber = parseFloat(minPrice);
+        const maxPriceNumber = parseFloat(maxPrice);
+
+        if (minPriceNumber >= maxPriceNumber) {
+          alert("Minimum price must be less than maximum price.");
+          return;
+        }
+        const code = document.getElementById("column6").textContent;
+        // Prepare the data to be sent in the POST request
+        const formData = {
+          code: code,
+          min_price: minPriceNumber,
+          max_price: maxPriceNumber,
+        };
+
+        // Send the POST request using Fetch API
+        fetch("http://localhost:3000/watchlist", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Network response was not ok");
+            }
+            window.alert(response.json());
+          })
+          .then((data) => {
+            // Handle the response from the server
+            console.log("Response from server:", data);
+          })
+          .catch((error) => {
+            console.error(
+              "There was a problem with the fetch operation:",
+              error
+            );
+          });
+
+        priceForm.reset();
+        priceForm.style.display = "none";
+      });
+
+
+
+      const watchlistbutton = document.querySelector(".watchlist-button");
+      watchlistbutton.addEventListener("click", function () {
+        try {
+          
+            fetch(
+              `http://localhost:3000/getwatchlist`
+            )
+              .then((resp) => resp.json())
+              .then((response) => {
+                document.querySelector(".watchlist-container").style.display =
+                  "block";
+                  const maincontainer = document.querySelector(".watchlist-container");
+                  maincontainer.innerHTML = "";
+                  
+                  response.forEach(element => {
+                    const elemcontainer = document.createElement("div");
+                    const nameElement = document.createElement("div");
+                    const maxPriceElement = document.createElement("div");
+                    const minPriceElement = document.createElement("div");
+
+                    elemcontainer.classList.add("container");
+                    nameElement.classList.add("column");
+                    maxPriceElement.classList.add("column");
+                    minPriceElement.classList.add("column");
+
+                    nameElement.innerHTML=
+                    element.code;
+                    maxPriceElement.innerHTML =
+                    element.max_price;
+                    minPriceElement.innerHTML =
+                    element.min_price;
+
+
+                    elemcontainer.appendChild(nameElement);
+                    elemcontainer.appendChild(maxPriceElement);
+                    elemcontainer.appendChild(minPriceElement);
+
+                    const container = document.querySelector(".watchlist-container");
+                    container.appendChild(elemcontainer)
+                    
+                  
+                  });
+                
+              });
+          
+        } catch (error) {
+          console.alert(error.error);
+        }
+      });
+
+      var box  = document.getElementById('box');
+      var down = false;
+
+
+      function toggleNotifi(){
+        if (down) {
+          box.style.height  = '0px';
+          box.style.opacity = 0;
+          down = false;
+        }else {
+          try{
+            fetch("http://localhost:3000/notification")
+            .then((resp) => resp.json())
+            .then((data) => {
+              document.getElementById("box").innerHTML=''
+              document.querySelector(".notification-count").innerHTML=data.length;
+              data.forEach(element => {
+              
+              const notificationitems = document.createElement("div");
+              const notificationtext= document.createElement("div");
+              const code = document.createElement("h4")
+              const data = document.createElement("p")
+
+              notificationitems.classList.add("notifi-item");
+              notificationtext.classList.add("text");
+
+              
+              code.innerText=element.code;
+              data.innerText=element.data;
+
+              notificationtext.appendChild(code)
+              notificationtext.appendChild(data)
+              
+              notificationitems.appendChild(notificationtext)
+              document.getElementById("box").appendChild(notificationitems)
+              })
+              
+            })
+          }
+          catch(error){
+            window.alert(error)
+          }
+          box.style.height  = '510px';
+          box.style.opacity = 1;
+          down = true;
+        }
+      }
+
+    </script>
+  </body>
+</html>

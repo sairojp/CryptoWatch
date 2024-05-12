@@ -1,4 +1,4 @@
-"# CryptoWatch" 
+# CryptoWatch 
 ## How to run the projects?
 1. Clone or Download zip and extract the project.
 2. Host a mongodb server (either in cloud or in local machine)
