@@ -48,7 +48,7 @@ function CreateChildProcess(){
 }
 
 CreateChildProcess();
-setInterval(CreateChildProcess,1  * 60 * 1000)
+setInterval(CreateChildProcess,5 * 60 * 1000)
 
 
 app.get("/search",searchCrypto)
