@@ -6,9 +6,9 @@ const {Crypto ,Watchlist,Log} = require("../db")
 const searchCrypto = async (req,res) => {
   try {
       const val = req.query.crypto;
-      const crypto = val.charAt(0).toUpperCase() + val.slice(1);
+      const crypto = val.trim().charAt(0).toUpperCase() + val.slice(1).replace(/\s+/g, '');
       console.log(crypto)
-      const data = await Crypto.findOne({name : crypto})
+      const data = await Crypto.findOne({ name: { $regex: new RegExp('^' + crypto + '$', 'i') } });
       console.log(data)
       if (data){
           res.status(200).json({data});
